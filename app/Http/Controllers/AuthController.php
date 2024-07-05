@@ -42,17 +42,22 @@ return view('auth.login');
 
 public function login(Request $request)
 {
-$credentials = $request->validate([
-'name' => 'required|string',
-'password' => 'required|string',
-]);
-if (Auth::attempt($credentials)) {
-$request->session()->regenerate();
-return redirect()->intended('/home');
-}
-return back()->withErrors([
-'username' => 'The provided credentials do not match our records.',
-]);
+    $credentials = $request->validate([
+        'name' => 'required|string',
+        'password' => 'required|string',
+    ]);
+
+    if (!Auth::attempt(['name' => $credentials['name'], 'password' => $credentials['password']])) {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
+
+    $user = Auth::user();
+    $token = $user->createToken('authToken')->plainTextToken;
+
+    return response()->json([
+        'user' => $user,
+        'token' => $token
+    ], 200);
 }
 
 public function logout(Request $request)
